@@ -3,36 +3,35 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MediatR;
 using CORE.APP.Models;
-using Patients.APP.Features.Patients;
+using Users.APP.Features.Users;
 using Microsoft.AspNetCore.Authorization;
 
 //Generated from Custom Microservices Template.
-namespace Patients.API.Controllers
+namespace Users.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class PatientsController : ControllerBase
+    public class UsersController : ControllerBase
     {
-        private readonly ILogger<PatientsController> _logger;
+        private readonly ILogger<UsersController> _logger;
         private readonly IMediator _mediator;
 
         // Constructor: injects logger to log the errors to Kestrel Console or Output Window and mediator
-        public PatientsController(ILogger<PatientsController> logger, IMediator mediator)
+        public UsersController(ILogger<UsersController> logger, IMediator mediator)
         {
             _logger = logger;
             _mediator = mediator;
         }
 
-        // GET: api/Patients
+        // GET: api/Users
         [HttpGet]
-        [AllowAnonymous]
         public async Task<IActionResult> Get()
         {
             try
             {
                 // Send a query request to get query response
-                var response = await _mediator.Send(new PatientQueryRequest());
+                var response = await _mediator.Send(new UserQueryRequest());
                 // Convert the query response to a list
                 var list = await response.ToListAsync();
                 // If there are items, return them with 200 OK
@@ -44,20 +43,21 @@ namespace Patients.API.Controllers
             catch (Exception exception)
             {
                 // Log the exception
-                _logger.LogError("PatientsGet Exception: " + exception.Message);
+                _logger.LogError("UsersGet Exception: " + exception.Message);
                 // Return 500 Internal Server Error with an error command response with message
-                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during PatientsGet."));
+                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during UsersGet.")); 
             }
         }
 
-        // GET: api/Patients/5
+        // GET: api/Users/5
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Get(int id)
         {
             try
             {
                 // Send a query request to get query response
-                var response = await _mediator.Send(new PatientQueryRequest());
+                var response = await _mediator.Send(new UserQueryRequest());
                 // Find the item with the given id
                 var item = await response.SingleOrDefaultAsync(r => r.Id == id);
                 // If item found, return it with 200 OK
@@ -69,16 +69,16 @@ namespace Patients.API.Controllers
             catch (Exception exception)
             {
                 // Log the exception
-                _logger.LogError("PatientsGetById Exception: " + exception.Message);
+                _logger.LogError("UsersGetById Exception: " + exception.Message);
                 // Return 500 Internal Server Error with an error command response with message
-                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during PatientsGetById."));
+                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during UsersGetById.")); 
             }
         }
 
-        // POST: api/Patients
+		// POST: api/Users
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Post(PatientCreateRequest request)
+        public async Task<IActionResult> Post(UserCreateRequest request)
         {
             try
             {
@@ -88,13 +88,13 @@ namespace Patients.API.Controllers
                     // Send the create request
                     var response = await _mediator.Send(request);
                     // If creation is successful, return 200 OK with success command response
-                    if ((bool)response.IsSuccessful)
+                    if (response.IsSuccessful == true)
                     {
                         //return CreatedAtAction(nameof(Get), new { id = response.Id }, response);
                         return Ok(response);
                     }
                     // If creation failed, add error command response message to model state
-                    ModelState.AddModelError("PatientsPost", response.Message);
+                    ModelState.AddModelError("UsersPost", response.Message);
                 }
                 // Return 400 Bad Request with all data annotation validation error messages and the error command response message if added seperated by |
                 return BadRequest(new CommandResponse(false, string.Join("|", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))));
@@ -102,16 +102,16 @@ namespace Patients.API.Controllers
             catch (Exception exception)
             {
                 // Log the exception
-                _logger.LogError("PatientsPost Exception: " + exception.Message);
+                _logger.LogError("UsersPost Exception: " + exception.Message);
                 // Return 500 Internal Server Error with an error command response with message
-                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during PatientsPost."));
+                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during UsersPost.")); 
             }
         }
 
-        // PUT: api/Patients
+        // PUT: api/Users
         [HttpPut]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Put(PatientUpdateRequest request)
+        public async Task<IActionResult> Put(UserUpdateRequest request)
         {
             try
             {
@@ -121,13 +121,13 @@ namespace Patients.API.Controllers
                     // Send the update request
                     var response = await _mediator.Send(request);
                     // If update is successful, return 200 OK with success command response
-                    if ((bool)response.IsSuccessful)
+                    if (response.IsSuccessful == true)
                     {
                         //return NoContent();
                         return Ok(response);
                     }
                     // If update failed, add error command response message to model state
-                    ModelState.AddModelError("PatientsPut", response.Message);
+                    ModelState.AddModelError("UsersPut", response.Message);
                 }
                 // Return 400 Bad Request with all data annotation validation error messages and the error command response message if added seperated by |
                 return BadRequest(new CommandResponse(false, string.Join("|", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))));
@@ -135,13 +135,13 @@ namespace Patients.API.Controllers
             catch (Exception exception)
             {
                 // Log the exception
-                _logger.LogError("PatientsPut Exception: " + exception.Message);
+                _logger.LogError("UsersPut Exception: " + exception.Message);
                 // Return 500 Internal Server Error with an error command response with message
-                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during PatientsPut."));
+                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during UsersPut.")); 
             }
         }
 
-        // DELETE: api/Patients/5
+        // DELETE: api/Users/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
@@ -149,25 +149,25 @@ namespace Patients.API.Controllers
             try
             {
                 // Send the delete request
-                var response = await _mediator.Send(new PatientDeleteRequest() { Id = id });
+                var response = await _mediator.Send(new UserDeleteRequest() { Id = id });
                 // If delete is successful, return 200 OK with success command response
-                if ((bool)response.IsSuccessful)
+                if (response.IsSuccessful == true)
                 {
                     //return NoContent();
                     return Ok(response);
                 }
                 // If delete failed, add error command response message to model state
-                ModelState.AddModelError("PatientsDelete", response.Message);
+                ModelState.AddModelError("UsersDelete", response.Message);
                 // Return 400 Bad Request with the error command response message
                 return BadRequest(new CommandResponse(false, string.Join("|", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))));
             }
             catch (Exception exception)
             {
                 // Log the exception
-                _logger.LogError("PatientsDelete Exception: " + exception.Message);
+                _logger.LogError("UsersDelete Exception: " + exception.Message);
                 // Return 500 Internal Server Error with an error command response with message
-                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during PatientsDelete."));
+                return StatusCode(StatusCodes.Status500InternalServerError, new CommandResponse(false, "An exception occured during UsersDelete.")); 
             }
         }
-    }
+	}
 }

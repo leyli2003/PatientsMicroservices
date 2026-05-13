@@ -1,38 +1,43 @@
-using System.Text;
+using CORE.APP.Services.Authntication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
-using Patients.APP.Domain;
-using Patients.APP.Features.Patients;
+using System.Text;
+using Users.APP.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// Add services to the IoC Container.
-// DbContext:
-builder.Services.AddDbContext<DbContext, PatientsDb>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString(nameof(PatientsDb))));
+// Add services to the container. IoC (Inversion of Control) Container
+// For DbContext Injection
+var connectionString = builder.Configuration.GetConnectionString(nameof(UsersDb)); // "UsersDb"
+builder.Services.AddDbContext<DbContext, UsersDb>(options => options.UseSqlite(connectionString));
 
-// Mediator:
+// For Mediator Injection
 foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
 {
     builder.Services.AddMediatR(config => config.RegisterServicesFromAssemblies(assembly));
 }
 
-// Authentication:
+builder.Services.AddSingleton<ITokenAuthService, TokenAuthService>();
+
 builder.Configuration["SecurityKey"] = "users_microservices_security_key_2026=";
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(config =>
     {
+        // Define rules for validating JWT.
         config.TokenValidationParameters = new TokenValidationParameters
         {
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["SecurityKey"] ?? string.Empty)),
-            ValidIssuer = builder.Configuration["Issuer"],
-            ValidAudience = builder.Configuration["Audience"],
+            // Use the builder configuration's security key to create a new symmetric security key for verifying the JWT's signature.
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["SecurityKey"] ?? string.Empty)),
+
+            ValidIssuer = builder.Configuration["Issuer"], // get Issuer section's value from appsettings.json
+            ValidAudience = builder.Configuration["Audience"], // get Audience section's value from appsettings.json
+
+            // These flags ensure the validation of the JWT.
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateIssuerSigningKey = true,
@@ -40,20 +45,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
-
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-
-// Swagger:
+// -------
+// Swagger
+// -------
+// Configure Swagger/OpenAPI documentation, including JWT authentication support in the UI.
 builder.Services.AddSwaggerGen(c =>
 {
+    // Define the basic information for your API.
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Patients API",
+        Title = "API",
         Version = "v1"
     });
 
+    // Add the JWT Bearer scheme to the Swagger UI so JWT can be tested in requests.
     c.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -68,6 +73,7 @@ builder.Services.AddSwaggerGen(c =>
         """
     });
 
+    // Add the security requirement globally so all endpoints are secured unless specified otherwise.
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -84,7 +90,10 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// CORS:
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy => policy
@@ -104,16 +113,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
-// CORS:
 app.UseCors();
 
 app.UseHttpsRedirection();
 
-// Authentication:
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();

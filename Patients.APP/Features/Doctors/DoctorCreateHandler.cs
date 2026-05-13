@@ -35,6 +35,26 @@ namespace Patients.APP.Features.Doctors
         {
             var firstName = request.FirstName?.Trim();
             var lastName = request.LastName?.Trim();
+            var patientIds = request.PatientIds ?? new List<int>();
+
+            if (!await DbSet<Branch>().AnyAsync(b => b.Id == request.BranchId, cancellationToken))
+            {
+                return Error("Selected branch was not found.");
+            }
+
+            if (patientIds.Any())
+            {
+                var existingPatientIds = await DbSet<Patient>()
+                    .Where(p => patientIds.Contains(p.Id))
+                    .Select(p => p.Id)
+                    .ToListAsync(cancellationToken);
+
+                var missingPatientIds = patientIds.Except(existingPatientIds).ToList();
+                if (missingPatientIds.Any())
+                {
+                    return Error($"Some patient IDs were not found: {string.Join(", ", missingPatientIds)}");
+                }
+            }
 
             if (await DbSet().AnyAsync(d =>
                 d.FirstName == firstName &&
@@ -51,10 +71,7 @@ namespace Patients.APP.Features.Doctors
                 LastName = lastName ?? string.Empty,
                 IsExpert = request.IsExpert,
                 UserId = request.UserId,
-                DoctorPatients = request.PatientIds.Select(patientId => new DoctorPatient
-                {
-                    PatientId = patientId
-                }).ToList()
+                PatientIds = patientIds
             };
 
             await CreateAsync(entity, cancellationToken);

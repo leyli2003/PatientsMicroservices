@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="APP\Services\NewFolder1\**" />
+    <EmbeddedResource Remove="APP\Services\NewFolder1\**" />
+    <None Remove="APP\Services\NewFolder1\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.26" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.25" />
   </ItemGroup>
 

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Patients API Check Panel</title>
+    <style>
+        :root {
+            --bg: #f4efe6;
+            --surface: rgba(255, 252, 246, 0.92);
+            --surface-strong: #fffdf8;
+            --ink: #1f2933;
+            --muted: #66717d;
+            --line: rgba(31, 41, 51, 0.12);
+            --brand: #0e7490;
+            --brand-strong: #155e75;
+            --accent: #c2410c;
+            --ok: #166534;
+            --warn: #9a3412;
+            --shadow: 0 24px 60px rgba(31, 41, 51, 0.12);
+            --radius: 22px;
+            --mono: "Cascadia Code", "Consolas", monospace;
+            --sans: "Segoe UI", "Trebuchet MS", sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: var(--sans);
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(14, 116, 144, 0.18), transparent 34%),
+                radial-gradient(circle at top right, rgba(194, 65, 12, 0.16), transparent 28%),
+                linear-gradient(180deg, #fbf8f2 0%, var(--bg) 100%);
+        }
+
+        .shell { width: min(1680px, calc(100% - 32px)); margin: 24px auto 40px; }
+        .hero, .panel, .card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero { padding: 28px; margin-bottom: 20px; }
+        .hero h1 { margin: 0 0 10px; font-size: clamp(2rem, 4vw, 3.6rem); line-height: 0.95; letter-spacing: -0.04em; }
+        .hero p { margin: 0; max-width: 820px; color: var(--muted); font-size: 1rem; }
+        .hero .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: rgba(14, 116, 144, 0.08);
+            color: var(--brand-strong);
+            font-size: 0.92rem;
+        }
+
+        .layout { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(360px, 1fr); gap: 24px; align-items: start; }
+        .stack { display: grid; gap: 20px; }
+        .panel { padding: 22px; }
+        .panel h2, .entity-head h2 { margin: 0 0 8px; font-size: 1.35rem; }
+        .panel p, .entity-head p, .hint, .field-help { margin: 0; color: var(--muted); }
+
+        .fields { display: grid; gap: 14px; margin-top: 18px; }
+        .two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        label { display: grid; gap: 6px; font-size: 0.94rem; font-weight: 600; }
+        input, select, textarea, button { font: inherit; }
+        input, select, textarea {
+            width: 100%;
+            border: 1px solid rgba(31, 41, 51, 0.15);
+            border-radius: 14px;
+            padding: 11px 13px;
+            background: var(--surface-strong);
+            color: var(--ink);
+        }
+        textarea { min-height: 104px; resize: vertical; font-family: var(--mono); font-size: 0.92rem; }
+
+        .toolbar, .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+        .toolbar { margin-top: 18px; }
+        button {
+            border: 0;
+            border-radius: 14px;
+            padding: 11px 15px;
+            background: var(--brand);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease;
+        }
+        button:hover { transform: translateY(-1px); background: var(--brand-strong); }
+        button.secondary { background: rgba(31, 41, 51, 0.08); color: var(--ink); }
+        button.warn { background: var(--accent); }
+
+        .entity { display: grid; gap: 14px; }
+        .entity-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: end; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+        .card { padding: 18px; }
+        .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+        .card form { display: grid; gap: 14px; margin-top: 14px; }
+
+        .response-box {
+            margin-top: 16px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .response-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(14, 116, 144, 0.06);
+        }
+        .status { font-weight: 700; }
+        .status.ok { color: var(--ok); }
+        .status.warn { color: var(--warn); }
+        pre {
+            margin: 0;
+            padding: 16px;
+            overflow: auto;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .small { font-size: 0.9rem; }
+        .muted { color: var(--muted); }
+        .inline-code { font-family: var(--mono); font-size: 0.92rem; }
+
+        @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } }
+        @media (max-width: 760px) {
+            .shell { width: min(100% - 20px, 1320px); }
+            .hero, .panel, .card { border-radius: 18px; }
+            .two-col { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <section class="hero">
+            <h1>Patients API Check Panel</h1>
+            <p>Use this page instead of Swagger to run the assignment checks for Branches, Doctors, Patients, and JWT-protected patient write operations. Anonymous patient list reads are available, while patient create, update, and delete require an Admin token.</p>
+            <div class="meta">
+                <span class="pill">Patients API default: <span class="inline-code">https://localhost:7051</span></span>
+                <span class="pill">Get JWT from Users API, then paste it here</span>
+                <span class="pill">Patient GET list is anonymous</span>
+            </div>
+        </section>
+
+        <div class="layout">
+            <main class="stack">
+                <section class="panel">
+                    <div class="entity-head">
+                        <div>
+                            <h2>API Target</h2>
+                            <p>Keep the Patients API on the same origin when possible.</p>
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <label>
+                            Patients API base URL
+                            <input id="patientsBaseUrl" type="url">
+                        </label>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="entity-head">
+                        <div>
+                            <h2>JWT Token</h2>
+                            <p>Get a token from the Users API separately, then paste it here. The stored JWT is sent only for operations marked as protected.</p>
+                        </div>
+                        <div class="toolbar">
+                            <button class="secondary" type="button" id="clearToken">Clear Stored Token</button>
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <label>
+                            Access token
+                            <textarea id="accessToken" placeholder="Paste the JWT you received from Users API."></textarea>
+                        </label>
+                    </div>
+                </section>
+
+                <section id="entitiesRoot" class="stack"></section>
+            </main>
+
+            <aside class="stack">
+                <section class="panel">
+                    <h2>Response Console</h2>
+                    <p>Every request writes here with the method, URL, status code, and response body.</p>
+                    <div class="response-box">
+                        <div class="response-meta">
+                            <span id="responseTitle" class="small">No request yet.</span>
+                            <span id="responseStatus" class="status muted">Waiting</span>
+                        </div>
+                        <pre id="responseBody">Run an action to inspect the API response.</pre>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <h2>Usage Notes</h2>
+                    <div class="fields">
+                        <p class="hint">Comma-separated relation fields accept values like <span class="inline-code">1,2,3</span>.</p>
+                        <p class="hint">Patient gender values map to <span class="inline-code">1 = Male</span>, <span class="inline-code">2 = Female</span>, <span class="inline-code">3 = Other</span>.</p>
+                        <p class="hint">If HTTPS certificates are not trusted in the browser, open the API once directly and accept the certificate before using this page.</p>
+                        <p class="hint">Get the JWT from the Users API separately, for example via Swagger or your token endpoint, then paste it into the Access token box.</p>
+                        <p class="hint">Patient write actions require an Admin role token because the controller uses <span class="inline-code">[Authorize(Roles = "Admin")]</span>.</p>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </div>
+    <script>
+        const entityConfigs = [
+            {
+                key: "branches",
+                title: "Branches",
+                path: "api/Branches",
+                notes: "Unprotected CRUD for branch records.",
+                protectedMethods: [],
+                fields: [
+                    { name: "Title", label: "Title", type: "text", required: true, placeholder: "Cardiology" }
+                ]
+            },
+            {
+                key: "doctors",
+                title: "Doctors",
+                path: "api/Doctors",
+                notes: "Doctor CRUD with branch and patient relations.",
+                protectedMethods: [],
+                fields: [
+                    { name: "BranchId", label: "Branch ID", type: "number", required: true, step: "1" },
+                    { name: "FirstName", label: "First Name", type: "text", required: true },
+                    { name: "LastName", label: "Last Name", type: "text", required: true },
+                    { name: "IsExpert", label: "Is Expert", type: "checkbox" },
+                    { name: "UserId", label: "User ID", type: "number", nullable: true, step: "1" },
+                    { name: "PatientIds", label: "Patient IDs", type: "csv", placeholder: "1,2,3" }
+                ]
+            },
+            {
+                key: "patients",
+                title: "Patients",
+                path: "api/Patients",
+                notes: "Patient list is anonymous. Patient create, update, and delete require an Admin token.",
+                protectedMethods: ["POST", "PUT", "DELETE", "GET_BY_ID"],
+                fields: [
+                    { name: "Height", label: "Height", type: "number", nullable: true, step: "0.1", placeholder: "176.5" },
+                    { name: "Weight", label: "Weight", type: "number", nullable: true, step: "0.1", placeholder: "72.3" },
+                    { name: "FirstName", label: "First Name", type: "text", required: true },
+                    { name: "LastName", label: "Last Name", type: "text", required: true },
+                    {
+                        name: "Gender",
+                        label: "Gender",
+                        type: "select",
+                        required: true,
+                        options: [
+                            { value: "1", text: "Male" },
+                            { value: "2", text: "Female" },
+                            { value: "3", text: "Other" }
+                        ]
+                    },
+                    { name: "BirthDate", label: "Birth Date", type: "datetime-local", required: true },
+                    { name: "UserId", label: "User ID", type: "number", nullable: true, step: "1" },
+                    { name: "DoctorIds", label: "Doctor IDs", type: "csv", placeholder: "1,2,3" }
+                ]
+            }
+        ];
+
+        const patientsBaseUrlInput = document.getElementById("patientsBaseUrl");
+        const responseTitle = document.getElementById("responseTitle");
+        const responseStatus = document.getElementById("responseStatus");
+        const responseBody = document.getElementById("responseBody");
+        const accessTokenInput = document.getElementById("accessToken");
+
+        patientsBaseUrlInput.value = window.location.origin;
+
+        document.getElementById("clearToken").addEventListener("click", () => {
+            accessTokenInput.value = "";
+            renderConsole("Stored token cleared.", "Waiting", "", false);
+        });
+
+        function renderEntities() {
+            const root = document.getElementById("entitiesRoot");
+            root.innerHTML = entityConfigs.map(createEntityMarkup).join("");
+            bindEntityEvents();
+        }
+
+        function createEntityMarkup(config) {
+            return `
+                <section class="panel entity" id="${config.key}">
+                    <div class="entity-head">
+                        <div>
+                            <h2>${config.title}</h2>
+                            <p>${config.notes}</p>
+                        </div>
+                        <div class="toolbar">
+                            <button type="button" data-action="list" data-entity="${config.key}">Get All</button>
+                        </div>
+                    </div>
+                    <div class="grid">
+                        <article class="card">
+                            <h3>Get By ID</h3>
+                            <p class="field-help">Fetch one item by id.</p>
+                            <form data-kind="getById" data-entity="${config.key}">
+                                <label>ID<input name="Id" type="number" min="1" step="1" required></label>
+                                <div class="actions"><button type="submit">Run GET</button></div>
+                            </form>
+                        </article>
+                        <article class="card">
+                            <h3>Create</h3>
+                            <p class="field-help">${config.protectedMethods.includes("POST") ? "Requires JWT." : "No JWT required."}</p>
+                            <form data-kind="create" data-entity="${config.key}">
+                                ${renderFields(config.fields, false)}
+                                <div class="actions"><button type="submit">Run POST</button></div>
+                            </form>
+                        </article>
+                        <article class="card">
+                            <h3>Update</h3>
+                            <p class="field-help">${config.protectedMethods.includes("PUT") ? "Requires JWT." : "No JWT required."}</p>
+                            <form data-kind="update" data-entity="${config.key}">
+                                <label>ID<input name="Id" type="number" min="1" step="1" required></label>
+                                ${renderFields(config.fields, true)}
+                                <div class="actions"><button type="submit">Run PUT</button></div>
+                            </form>
+                        </article>
+                        <article class="card">
+                            <h3>Delete</h3>
+                            <p class="field-help">${config.protectedMethods.includes("DELETE") ? "Requires JWT." : "No JWT required."}</p>
+                            <form data-kind="delete" data-entity="${config.key}">
+                                <label>ID<input name="Id" type="number" min="1" step="1" required></label>
+                                <div class="actions"><button type="submit" class="warn">Run DELETE</button></div>
+                            </form>
+                        </article>
+                    </div>
+                </section>
+            `;
+        }
+
+        function renderFields(fields, includePrefillButton) {
+            const markup = fields.map(field => {
+                if (field.type === "checkbox") {
+                    return `<label><span>${field.label}</span><select name="${field.name}"><option value="false">False</option><option value="true">True</option></select></label>`;
+                }
+
+                if (field.type === "select") {
+                    return `<label>${field.label}<select name="${field.name}" ${field.required ? "required" : ""}>${field.options.map(option => `<option value="${option.value}">${option.text}</option>`).join("")}</select></label>`;
+                }
+
+                if (field.type === "csv") {
+                    return `<label>${field.label}<input name="${field.name}" type="text" placeholder="${field.placeholder || ""}"></label>`;
+                }
+
+                return `<label>${field.label}<input name="${field.name}" type="${field.type}" ${field.required ? "required" : ""} ${field.step ? `step="${field.step}"` : ""} ${field.placeholder ? `placeholder="${field.placeholder}"` : ""}></label>`;
+            }).join("");
+
+            if (!includePrefillButton) {
+                return markup;
+            }
+
+            return `<div class="actions"><button class="secondary" type="button" data-action="prefill">Prefill From Last Get By ID</button></div>${markup}`;
+        }
+
+        function bindEntityEvents() {
+            document.querySelectorAll("[data-action='list']").forEach(button => {
+                button.addEventListener("click", async () => {
+                    const config = getConfig(button.dataset.entity);
+                    await sendRequest({
+                        title: `${config.title} - Get All`,
+                        method: "GET",
+                        url: buildPatientsUrl(config.path)
+                    });
+                });
+            });
+
+            document.querySelectorAll("form[data-kind]").forEach(form => {
+                form.addEventListener("submit", async event => {
+                    event.preventDefault();
+                    const config = getConfig(form.dataset.entity);
+                    const kind = form.dataset.kind;
+                    await handleFormSubmit(config, kind, form);
+                });
+            });
+
+            document.querySelectorAll("[data-action='prefill']").forEach(button => {
+                button.addEventListener("click", event => {
+                    const form = event.target.closest("form");
+                    const config = getConfig(form.dataset.entity);
+                    const cached = sessionStorage.getItem(`last-${config.key}`);
+                    if (!cached) {
+                        renderConsole(`${config.title} - Prefill`, "No cached GET by ID response", "Run Get By ID first.", false);
+                        return;
+                    }
+
+                    applyFormValues(form, JSON.parse(cached));
+                    renderConsole(`${config.title} - Prefill`, "Ready", "Form filled from the latest Get By ID result.", false);
+                });
+            });
+        }
+
+        async function handleFormSubmit(config, kind, form) {
+            const id = form.querySelector("[name='Id']")?.value;
+            const payload = kind === "delete" || kind === "getById" ? null : getPayload(config, form);
+            const methodMap = { getById: "GET", create: "POST", update: "PUT", delete: "DELETE" };
+            const method = methodMap[kind];
+            const methodFlag = kind === "getById" ? "GET_BY_ID" : method;
+            const needsToken = config.protectedMethods.includes(methodFlag);
+            const url = kind === "getById" || kind === "delete"
+                ? `${buildPatientsUrl(config.path)}/${id}`
+                : buildPatientsUrl(config.path);
+
+            const result = await sendRequest({
+                title: `${config.title} - ${kind}`,
+                method,
+                url,
+                payload,
+                includeToken: needsToken
+            });
+
+            if (kind === "getById" && result.ok && result.data) {
+                sessionStorage.setItem(`last-${config.key}`, JSON.stringify(result.data));
+            }
+        }
+
+        function getPayload(config, form) {
+            const payload = {};
+
+            for (const field of config.fields) {
+                const element = form.elements[field.name];
+                if (!element) {
+                    continue;
+                }
+
+                const value = element.value.trim();
+
+                if (field.type === "csv") {
+                    payload[field.name] = value
+                        ? value.split(",").map(item => Number(item.trim())).filter(item => !Number.isNaN(item))
+                        : [];
+                    continue;
+                }
+
+                if (field.type === "number") {
+                    payload[field.name] = value === "" && field.nullable ? null : Number(value);
+                    continue;
+                }
+
+                if (field.type === "datetime-local") {
+                    payload[field.name] = value ? new Date(value).toISOString() : "";
+                    continue;
+                }
+
+                if (field.type === "checkbox") {
+                    payload[field.name] = value === "true";
+                    continue;
+                }
+
+                if (field.type === "select") {
+                    payload[field.name] = Number(value);
+                    continue;
+                }
+
+                payload[field.name] = value;
+            }
+
+            const idElement = form.elements["Id"];
+            if (idElement && idElement.value.trim() !== "") {
+                payload.Id = Number(idElement.value);
+            }
+
+            return payload;
+        }
+
+        function applyFormValues(form, data) {
+            const idElement = form.elements["Id"];
+            if (idElement && data.Id) {
+                idElement.value = data.Id;
+            }
+
+            for (const [key, value] of Object.entries(data)) {
+                const element = form.elements[key];
+                if (!element) {
+                    continue;
+                }
+
+                if (Array.isArray(value)) {
+                    element.value = value.join(",");
+                    continue;
+                }
+
+                if (typeof value === "boolean") {
+                    element.value = value ? "true" : "false";
+                    continue;
+                }
+
+                if (key === "BirthDate" && value) {
+                    const date = new Date(value);
+                    element.value = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                    continue;
+                }
+
+                if (value !== null && value !== undefined) {
+                    element.value = value;
+                }
+            }
+        }
+
+        async function sendRequest({ title, method, url, payload, includeToken = false }) {
+            const headers = { Accept: "application/json" };
+
+            if (payload !== null && payload !== undefined) {
+                headers["Content-Type"] = "application/json";
+            }
+
+            if (includeToken) {
+                const token = accessTokenInput.value.trim();
+                if (!token) {
+                    renderConsole(title, "Missing JWT", "This action needs a token, but the Access token box is empty.", false);
+                    return { ok: false, data: null };
+                }
+
+                headers.Authorization = `Bearer ${token}`;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method,
+                    headers,
+                    body: payload !== null && payload !== undefined ? JSON.stringify(payload) : undefined
+                });
+
+                const text = await response.text();
+                const data = tryParseJson(text);
+                renderConsole(`${title} - ${method} ${url}`, `${response.status} ${response.statusText}`, data ?? text, response.ok);
+                return { ok: response.ok, data };
+            } catch (error) {
+                renderConsole(`${title} - ${method} ${url}`, "Request failed", error.message || String(error), false);
+                return { ok: false, data: null };
+            }
+        }
+
+        function renderConsole(title, statusText, body, ok) {
+            responseTitle.textContent = title;
+            responseStatus.textContent = statusText;
+            responseStatus.className = `status ${ok ? "ok" : "warn"}`;
+            responseBody.textContent = typeof body === "string" ? body : JSON.stringify(body, null, 2);
+        }
+
+        function tryParseJson(text) {
+            if (!text) {
+                return null;
+            }
+
+            try {
+                return JSON.parse(text);
+            } catch {
+                return null;
+            }
+        }
+
+        function buildPatientsUrl(path) {
+            return `${normalizeBaseUrl(patientsBaseUrlInput.value)}/${path}`;
+        }
+
+        function normalizeBaseUrl(value) {
+            return value.trim().replace(/\/+$/, "");
+        }
+
+        function getConfig(key) {
+            return entityConfigs.find(entity => entity.key === key);
+        }
+
+        renderEntities();
+    </script>
+</body>
+</html>
