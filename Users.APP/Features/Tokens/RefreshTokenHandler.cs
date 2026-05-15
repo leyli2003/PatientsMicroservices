@@ -1,6 +1,6 @@
 ﻿using CORE.APP.Models.Authentication;
 using CORE.APP.Services;
-using CORE.APP.Services.Authntication;
+using CORE.APP.Services.Authentication;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Users.APP.Domain;

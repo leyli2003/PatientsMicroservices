@@ -6,7 +6,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace CORE.APP.Services.Authntication
+namespace CORE.APP.Services.Authentication
 {
     /// <summary>
     /// Provides concrete implementations for token-based authentication operations, including

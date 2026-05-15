@@ -1,7 +1,7 @@
 ﻿using CORE.APP.Models.Authentication;
 using CORE.APP.Services;
 //using CORE.APP.Services.Authentication;
-using CORE.APP.Services.Authntication;
+using CORE.APP.Services.Authentication;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Users.APP.Domain;
@@ -78,7 +78,7 @@ namespace Users.APP.Features.Tokens
             await UpdateAsync(user, cancellationToken);
 
             // return a token response according to the expiration including the JWT and refresh token.
-            var expiration = DateTime.Now.AddMinutes(5); // the JWT will expire after 5 minutes from DateTime.Now's execution value
+            var expiration = DateTime.Now.AddMinutes(5); // the JWT will expire after 5 minute from DateTime.Now's execution value
             return _tokenAuthService.GetTokenResponse(user.Id, user.UserName, user.UserRoles.Select(ur => ur.Role.Name).ToArray(),
                 expiration, request.SecurityKey, request.Issuer, request.Audience, user.RefreshToken);
         }

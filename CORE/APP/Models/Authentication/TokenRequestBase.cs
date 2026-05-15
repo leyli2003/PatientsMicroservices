@@ -28,7 +28,7 @@ namespace CORE.APP.Models.Authentication
         /// and used for cryptographic operations in JWT handling.
         /// </summary>
         [JsonIgnore]
-        [ValidateNever]
+       
         public string SecurityKey { get; set; }
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace CORE.APP.Models.Authentication
         /// and used during JWT generation and validation.
         /// </summary>
         [JsonIgnore]
-        [ValidateNever]
+       
         public string Issuer { get; set; }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace CORE.APP.Models.Authentication
         /// and used during JWT generation and validation.
         /// </summary>
         [JsonIgnore]
-        [ValidateNever]
+    
         public string Audience { get; set; }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using CORE.APP.Models.Authentication;
 using System.Security.Claims;
 
-namespace CORE.APP.Services.Authntication
+namespace CORE.APP.Services.Authentication
 {
     /// <summary>
     /// Provides token-based authentication operations, including access token (JWT) and refresh token generation and claim extraction.

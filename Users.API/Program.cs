@@ -1,4 +1,4 @@
-using CORE.APP.Services.Authntication;
+using CORE.APP.Services.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
