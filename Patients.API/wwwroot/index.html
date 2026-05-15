@@ -347,7 +347,7 @@
                         <div class="panel-header">
                             <div class="panel-header-copy">
                                 <h2>JWT Token</h2>
-                                <p>Get a token from the Users API separately, then paste it here. The stored JWT is sent only for operations marked as protected.</p>
+                                <p>Get a token from the Users API separately, then paste only the raw JWT here without the <span class="inline-code">Bearer</span> prefix. The stored JWT is sent only for operations marked as protected.</p>
                             </div>
                             <div class="toolbar">
                                 <button class="secondary" type="button" id="clearToken">Clear Stored Token</button>
@@ -356,7 +356,7 @@
                         <div class="fields">
                             <label>
                                 Access token
-                                <textarea id="accessToken" placeholder="Paste the JWT you received from Users API."></textarea>
+                                <textarea id="accessToken" placeholder="Paste the JWT you received from Users API without the Bearer prefix."></textarea>
                             </label>
                         </div>
                     </section>
@@ -384,7 +384,7 @@
                         <div class="note hint">Comma-separated relation fields accept values like <span class="inline-code">1,2,3</span>.</div>
                         <div class="note hint">Patient gender values map to <span class="inline-code">1 = Male</span>, <span class="inline-code">2 = Female</span>, <span class="inline-code">3 = Other</span>.</div>
                         <div class="note hint">If HTTPS certificates are not trusted in the browser, open the API once directly and accept the certificate before using this page.</div>
-                        <div class="note hint">Get the JWT from the Users API separately, for example via Swagger or your token endpoint, then paste it into the Access token box.</div>
+                        <div class="note hint">Get the JWT from the Users API separately, for example via Swagger or your token endpoint, then paste only the token value into the Access token box without <span class="inline-code">Bearer</span>.</div>
                         <div class="note hint">Patient write actions require an Admin role token because the controller uses <span class="inline-code">[Authorize(Roles = "Admin")]</span>.</div>
                     </div>
                 </section>
